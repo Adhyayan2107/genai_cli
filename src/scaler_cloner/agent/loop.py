@@ -1,11 +1,7 @@
-"""ReAct executor — the heart of the agent.
+"""ReAct executor — VIBE-CODER edition.
 
-Reads MEMORY.md at start (host-scoped), runs the post-run MemoryWriter after
-OUTPUT, and runs the deterministic validator after every successful
-`index.html` write.
-
-The target URL is extracted from the user's message; if none is found, the
-loop terminates with a request for one.
+Memory is intentionally NOT loaded or written by this loop. `MEMORY.md` in
+the repo root is kept as a static design artifact only.
 """
 
 from __future__ import annotations
@@ -20,7 +16,6 @@ from scaler_cloner.tools.registry import TOOL_MAP, TOOL_SCHEMAS
 
 from .context import build_context
 from .llm import GeminiClient
-from .memory import load_memory
 from .schema import AgentStep, Turn
 from .url import extract_target
 from .validator import validate_index_html
@@ -43,12 +38,12 @@ async def run_agent(
     cfg: Config,
     bus: EventBus | None = None,
     *,
-    write_memory_after: bool = True,
+    write_memory_after: bool = False,  # kept for back-compat; ignored
 ) -> RunResult:
     bus = bus or EventBus()
     run_id = new_run_id()
 
-    target_url, target_host = extract_target(user_request)
+    target_url, _ = extract_target(user_request)
     if not target_url:
         msg = ("No URL found in the request. Try: 'clone https://stripe.com' "
                "or 'clone stripe.com'.")
@@ -58,10 +53,6 @@ async def run_agent(
                          steps=0, tool_calls=0, transcript=[])
 
     client = GeminiClient(cfg)
-
-    memory = load_memory(cfg.memory_path)
-    memory_block = memory.context_block(host=target_host)
-
     transcript: list[Turn] = [
         Turn(author="user", step=AgentStep(step="START", content=user_request))
     ]
@@ -85,7 +76,7 @@ async def run_agent(
                          "summarizing what was produced."),
             )))
 
-        ctx = build_context(transcript, target_url=target_url, memory_block=memory_block)
+        ctx = build_context(transcript, target_url=target_url, memory_block="")
         result = await client.complete(ctx)
         step = result.step
         steps += 1
@@ -149,23 +140,6 @@ async def run_agent(
                 content=("You may not author OBSERVE steps. Only the runtime emits them "
                          "in response to your TOOL calls. Continue with THINK or TOOL or OUTPUT."),
             )))
-
-    if write_memory_after and final_output:
-        try:
-            from .memory_writer import write_memory
-            applied = await write_memory(
-                cfg, user_request, final_output, run_id, target_host=target_host
-            )
-            if applied:
-                await bus.publish(AgentEvent(
-                    kind="memory_updated",
-                    content=f"+{len(applied)} memory patch(es)",
-                ))
-        except Exception as e:
-            await bus.publish(AgentEvent(
-                kind="error",
-                content=f"memory writer failed: {e.__class__.__name__}",
-            ))
 
     return RunResult(
         run_id=run_id,

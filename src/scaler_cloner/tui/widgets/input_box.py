@@ -1,20 +1,19 @@
-"""Rounded-border prompt input.
-
-The actual `border: round` is applied by the wrapping container in theme.tcss
-because Textual's `Input` widget owns its own border slot. Wrapping in a
-container lets us color the box and the input independently.
-"""
+"""Codex-style prompt — '>' caret + flat Input. No outer border."""
 
 from __future__ import annotations
 
 from textual import on
-from textual.containers import Container
+from textual.containers import Horizontal
 from textual.message import Message
-from textual.widgets import Input
+from textual.widgets import Input, Static
 
 
-class InputBox(Container):
-    """Container around a single-line Input. Emits `Submitted(text)`."""
+class InputBox(Horizontal):
+    DEFAULT_CSS = """
+    InputBox { height: 3; width: 1fr; }
+    InputBox > #caret { width: 2; height: 3; content-align: left middle; color: #d0a875; }
+    InputBox > Input  { width: 1fr; height: 3; }
+    """
 
     class Submitted(Message):
         def __init__(self, text: str) -> None:
@@ -22,7 +21,8 @@ class InputBox(Container):
             super().__init__()
 
     def compose(self):
-        yield Input(placeholder="message — try ‘clone scaler.com’", id="prompt")
+        yield Static(">", id="caret")
+        yield Input(placeholder="paste a URL · type ‘clone https://stripe.com’", id="prompt")
 
     @on(Input.Submitted, "#prompt")
     def _on_submit(self, event: Input.Submitted) -> None:
@@ -33,4 +33,4 @@ class InputBox(Container):
         self.post_message(self.Submitted(text))
 
     def focus_input(self) -> None:
-        self.query_one(Input).focus()
+        self.query_one("#prompt", Input).focus()

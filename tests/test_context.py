@@ -12,7 +12,7 @@ def _t(author: str, **kw) -> Turn:
 
 def test_initial_call_no_transcript():
     ctx = build_context([], target_url="https://stripe.com", user_request="clone stripe")
-    assert "Site Cloner" in ctx.system
+    assert "VIBE-CODER" in ctx.system
     assert "## Task" in ctx.system
     assert "https://stripe.com" in ctx.system
     assert "## Schema reminder" in ctx.system

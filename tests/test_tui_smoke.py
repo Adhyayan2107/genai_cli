@@ -1,4 +1,4 @@
-"""TUI smoke tests."""
+"""TUI smoke tests — VIBE-CODER edition."""
 
 from __future__ import annotations
 
@@ -7,7 +7,8 @@ from pathlib import Path
 import pytest
 
 from scaler_cloner.config import Config
-from scaler_cloner.tui.app import SiteClonerApp
+from scaler_cloner.tui.app import VibeCoderApp
+from scaler_cloner.tui.widgets.banner import Banner
 from scaler_cloner.tui.widgets.chat_log import ChatLog
 from scaler_cloner.tui.widgets.input_box import InputBox
 from scaler_cloner.tui.widgets.status_bar import StatusBar
@@ -22,26 +23,20 @@ def _cfg(tmp_path: Path) -> Config:
     )
 
 
-def _log_text(log: ChatLog) -> str:
-    return "\n".join(str(c.render()) for c in log.children)
-
-
 @pytest.mark.asyncio
-async def test_app_composes(tmp_path):
-    app = SiteClonerApp(_cfg(tmp_path))
-    async with app.run_test(size=(120, 40)):
+async def test_app_composes_with_banner(tmp_path):
+    app = VibeCoderApp(_cfg(tmp_path))
+    async with app.run_test(size=(140, 40)):
+        assert app.query_one(Banner) is not None
         assert app.query_one(ChatLog) is not None
         assert app.query_one(InputBox) is not None
         assert app.query_one(StatusBar) is not None
         assert app.query_one(ThinkingBubble) is not None
-        text = _log_text(app.query_one(ChatLog)).lower()
-        assert "welcome" in text
-        assert "url" in text  # new generalist prompt mentions URL
 
 
 @pytest.mark.asyncio
 async def test_app_resizes_cleanly(tmp_path):
-    app = SiteClonerApp(_cfg(tmp_path))
+    app = VibeCoderApp(_cfg(tmp_path))
     async with app.run_test(size=(80, 24)) as pilot:
         await pilot.pause()
         await pilot.resize_terminal(160, 50)
@@ -54,8 +49,8 @@ async def test_app_resizes_cleanly(tmp_path):
 
 @pytest.mark.asyncio
 async def test_thinking_bubble_lifecycle(tmp_path):
-    app = SiteClonerApp(_cfg(tmp_path))
-    async with app.run_test(size=(120, 40)) as pilot:
+    app = VibeCoderApp(_cfg(tmp_path))
+    async with app.run_test(size=(140, 40)) as pilot:
         bubble = app.query_one(ThinkingBubble)
         bubble.start("scheming")
         await pilot.pause()
@@ -64,3 +59,9 @@ async def test_thinking_bubble_lifecycle(tmp_path):
         bubble.stop()
         await pilot.pause()
         assert not bubble.parent.has_class("visible")
+
+
+def test_back_compat_aliases():
+    from scaler_cloner.tui.app import ScalerClonerApp, SiteClonerApp, VibeCoderApp
+    assert ScalerClonerApp is VibeCoderApp
+    assert SiteClonerApp is VibeCoderApp

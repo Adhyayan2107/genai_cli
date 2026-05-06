@@ -1,4 +1,13 @@
-"""Root Textual app for the Site Cloner."""
+"""Root Textual app — VIBE-CODER edition.
+
+Layout (top to bottom):
+  banner (block letters, shown once)
+  tagline
+  chat (1fr, monochrome event log)
+  thinking row (single ▪ + dim verb, only when active)
+  thin rule + '>' prompt
+  status bar
+"""
 
 from __future__ import annotations
 
@@ -9,12 +18,13 @@ from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal
-from textual.widgets import Footer, Static
+from textual.widgets import Static
 
 from scaler_cloner.agent.loop import run_agent
 from scaler_cloner.config import Config
 from scaler_cloner.events import AgentEvent, EventBus
 
+from .widgets.banner import Banner, TAGLINE
 from .widgets.chat_log import ChatLog
 from .widgets.input_box import InputBox
 from .widgets.status_bar import StatusBar
@@ -30,9 +40,9 @@ _KIND_TO_VERB = {
 }
 
 
-class SiteClonerApp(App):
+class VibeCoderApp(App):
     CSS_PATH = Path(__file__).parent / "theme.tcss"
-    TITLE = "Site Cloner"
+    TITLE = "vibe-coder"
 
     BINDINGS = [
         Binding("ctrl+c", "quit", "quit", priority=True),
@@ -51,8 +61,10 @@ class SiteClonerApp(App):
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="topbar"):
-            yield Static("Site Cloner", id="title")
-            yield Static(f"{self._cfg.model}", id="meta")
+            yield Static("vibe-coder", id="title")
+            yield Static(self._cfg.model, id="meta")
+        yield Banner(id="banner")
+        yield Static(TAGLINE, id="banner-tag")
         with Container(id="chat"):
             yield ChatLog(id="chatlog")
         with Container(id="thinking-row"):
@@ -60,24 +72,22 @@ class SiteClonerApp(App):
         with Container(id="input-row"):
             yield InputBox(id="inputbox")
         yield StatusBar(id="status-bar")
-        yield Footer()
 
     def on_mount(self) -> None:
         self.query_one(StatusBar).update_status(
             model=self._cfg.model, steps=0, tool_calls=0, run_id="—"
         )
+        # Defer focus until children are mounted and laid out.
+        self.call_after_refresh(self._focus_prompt)
+
+    def _focus_prompt(self) -> None:
         self.query_one(InputBox).focus_input()
-        log: ChatLog = self.query_one(ChatLog)
-        log._append(
-            "▸ welcome — type a URL to clone. e.g. ‘clone https://stripe.com’.",
-            "chat-think",
-        )
 
     @on(InputBox.Submitted)
     def _on_submit(self, event: InputBox.Submitted) -> None:
         if self._agent_task and not self._agent_task.done():
             self.query_one(ChatLog)._append(
-                "! agent is busy — wait for it to finish or press ctrl+c", "chat-error"
+                "! agent is busy — wait or ctrl+c", "chat-error"
             )
             return
         self.query_one(ChatLog).append_user(event.text)
@@ -142,10 +152,11 @@ class SiteClonerApp(App):
         self.query_one(InputBox).focus_input()
 
 
-# Back-compat alias for older imports
-ScalerClonerApp = SiteClonerApp
+# Back-compat aliases
+SiteClonerApp = VibeCoderApp
+ScalerClonerApp = VibeCoderApp
 
 
 def run_tui(cfg: Config | None = None) -> None:
     cfg = cfg or Config.load()
-    SiteClonerApp(cfg).run()
+    VibeCoderApp(cfg).run()

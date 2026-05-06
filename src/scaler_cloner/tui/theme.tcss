@@ -1,98 +1,50 @@
-/* Scaler Cloner — Textual theme.
+/* VIBE-CODER — Codex-style monochrome. */
 
-Layout strategy:
-  - root is a `Vertical` of three regions: Header bar, ChatLog (1fr), input area.
-  - Everything sizes in `fr` and `auto` so terminal resize reflows automatically.
-  - Min terminal we target: 80x24. At <80 cols, the status bar collapses.
-
-Color palette (matches Scaler-ish brand + Claude Code orange for the pulse):
-  $accent-orange = #FF6B1A
-  $accent-orange-soft = #FFA559
-*/
-
-Screen {
-  background: $surface;
-  color: $text;
-  layers: base overlay;
-}
+Screen { background: #0c0c0d; color: #c8c8c8; }
 
 #topbar {
-  height: 1;
-  padding: 0 1;
-  background: $boost;
-  color: $text-muted;
+  height: 1; padding: 0 1;
+  background: #0c0c0d; color: #6f6f6f;
 }
+#topbar #title { content-align: left middle; color: #6f6f6f; }
+#topbar #meta  { content-align: right middle; color: #4a4a4a; }
 
-#topbar #title { content-align: left middle; }
-#topbar #meta  { content-align: right middle; color: $text-muted; }
+#banner    { height: auto; padding: 1 2 0 2; color: #d0a875; background: #0c0c0d; }
+#banner-tag{ height: 1; padding: 0 2 1 2; color: #6f6f6f; background: #0c0c0d; }
 
-#chat {
-  height: 1fr;
-  padding: 1 2;
-  border: none;
-  background: $surface;
-}
+#chat { height: 1fr; padding: 0 2; background: #0c0c0d; }
 
-ChatLog {
-  height: 1fr;
-  scrollbar-size: 1 1;
-  background: $surface;
-}
+ChatLog { height: 1fr; scrollbar-size: 1 1; background: #0c0c0d; }
+ChatLog .chat-user      { color: #e6e6e6; }
+ChatLog .chat-think     { color: #707070; }
+ChatLog .chat-tool      { color: #9a9a9a; }
+ChatLog .chat-tool-ok   { color: #7ea877; }
+ChatLog .chat-tool-err  { color: #c46060; }
+ChatLog .chat-output    { color: #d0a875; }
+ChatLog .chat-error     { color: #c46060; }
+ChatLog .chat-validator { color: #8a8a8a; }
+ChatLog .chat-memory    { color: #8a8a8a; }
 
-ChatLog .chat-user        { color: $accent; text-style: bold; }
-ChatLog .chat-think       { color: $text-muted; }
-ChatLog .chat-tool        { color: #FFA559; }
-ChatLog .chat-tool-ok     { color: #2ECC71; }
-ChatLog .chat-tool-err    { color: #FF5C5C; }
-ChatLog .chat-output      { color: #2ECC71; text-style: bold; }
-ChatLog .chat-error       { color: #FF5C5C; text-style: bold; }
-ChatLog .chat-validator   { color: #B19CD9; text-style: italic; }
-ChatLog .chat-memory      { color: #C792EA; }
-
-#thinking-row {
-  height: 1;
-  padding: 0 2;
-  display: none;
-}
-
+#thinking-row { height: 1; padding: 0 2; display: none; }
 #thinking-row.visible { display: block; }
+ThinkingBubble { width: auto; height: 1; }
+ThinkingBubble #dot  { color: #707070; padding-right: 1; }
+ThinkingBubble #verb { color: #707070; }
 
-ThinkingBubble {
-  width: auto;
-  height: 1;
-}
-
-ThinkingBubble #dot   { color: #FF6B1A; text-style: bold; padding-right: 1; }
-ThinkingBubble #verb  { color: $text-muted; text-style: italic; }
-
+/* Input row — single line, thin rule above. NO height override on InputBox. */
 #input-row {
-  height: auto;
-  padding: 1 2 1 2;
-  background: $surface;
-}
-
-InputBox {
   height: 3;
-  border: round #FF6B1A;
-  background: $surface;
-  padding: 0 1;
+  padding: 0 2;
+  background: #0c0c0d;
+  border-top: heavy #1c1c1c;
 }
 
-InputBox:focus-within { border: round #FFA559; }
-
-InputBox > Input {
+Input {
   border: none;
-  background: $surface;
+  background: #0c0c0d;
+  color: #e6e6e6;
   padding: 0;
 }
+Input:focus { background: #0c0c0d; }
 
-#status-bar {
-  height: 1;
-  padding: 0 2;
-  background: $boost;
-  color: $text-muted;
-}
-
-#status-bar .ok    { color: #2ECC71; }
-#status-bar .warn  { color: #FFA559; }
-#status-bar .err   { color: #FF5C5C; }
+#status-bar { height: 1; padding: 0 2; background: #0c0c0d; color: #4a4a4a; }
